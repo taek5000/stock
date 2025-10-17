@@ -33,7 +33,7 @@ if __name__ == "__main__":
         "changeVal": "전일비",
         "changeRate": "등락률(%)",
         "quant": "거래량",
-        "amnt": "거래대금",
+        "amonut": "거래대금",
         "marketSum": "시가총액(억)",
         "nav": "NAV",
         "navChangeRate": "NAV등락률(%)",

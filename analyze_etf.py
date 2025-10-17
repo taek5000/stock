@@ -121,3 +121,81 @@ plt.tight_layout()
 plt.show()
 
 print(f"[INFO] 3개월 수익률과 시가총액의 상관계수 : {corr:.3f}")
+
+
+
+
+
+## 6단계 : ETF 지표 간 상관관계 분석 (Heatmap 시각화)
+# 주요 수치들 간에 서로 얼마나 연관되어 있는지 확인
+import seaborn as sns
+import matplotlib.pyplot as plt
+
+# 분석에 사용할 숫자형 컬럼 선택
+numeric_cols = ["시가총액(억)", "거래대금", "등락률(%)", "3개월수익률(%)", "NAV"]
+
+# 숫자형으로 변환
+for col in numeric_cols:
+    df[col] = pd.to_numeric(df[col], errors = "coerce")
+    
+corr = df[numeric_cols].corr().round(2)
+print("[INFO] 상관계수 행렬:")
+print(corr)
+
+# 히트맵 시각화
+plt.figure(figsize = (7, 5))
+sns.heatmap(corr, annot = True, cmap = "coolwarm", center = 0, linewidths = 0.5, fmt = ".2f")
+plt.title("ETF 주요 지표 간 상관관계 Heatmap", fontsize = 14)
+plt.tight_layout()
+plt.show()
+
+
+
+
+## 7단계 : K-Means 클러스터링
+# ETF를 특성별로 그룹화 진행
+from sklearn.cluster import KMeans
+from sklearn.preprocessing import StandardScaler
+import matplotlib.pyplot as plt
+
+# 사용할 지표 선택
+cols = ["시가총액(억)", "거래대금", "3개월수익률(%)", "NAV"]
+
+# 숫자형 변환 + 결측치 제거
+for c in cols:
+    df[c] = pd.to_numeric(df[c], errors = "coerce")
+X = df[cols].dropna()
+
+# 데이터 표준화 (평균 0, 표준편차 1)
+scaler = StandardScaler() # 변수 단위가 달라 변수 단위 맞춰주는 작업
+X_scaled = scaler.fit_transform(X)
+
+# KMean로 3개 클러스터 분류
+kmeans = KMeans(n_clusters = 3, random_state = 42, n_init = 10)
+labels = kmeans.fit_predict(X_scaled)
+
+# 결과를 원본 df에 합치기
+df_clustered = df.loc[X.index].copy()
+df_clustered["클러스터"] = labels
+
+print("[INFO] 각 클러스터별 ETF 개수:")
+print(df_clustered["클러스터"].value_counts())
+
+# 시각화 (시가총액 vs 3개월 수익률)
+plt.figure(figsize = (8, 6))
+for cluster_id in sorted(df_clustered["클러스터"].unique()):
+    cluster_data = df_clustered[df_clustered["클러스터"] == cluster_id]
+    plt.scatter(cluster_data["3개월수익률(%)"], cluster_data["시가총액(억)"], 
+                label = f"Cluster {cluster_id}", alpha = 0.6, edgecolors = "black")
+
+plt.title("K-Means 클러스터링: 3개월 수익률 vs 시가총액", fontsize = 14)
+plt.xlabel("3개월 수익률(%)")
+plt.ylabel("시가총액(억)")
+plt.legend()
+plt.grid(True, linestyle = "--", alpha = 0.5)
+plt.tight_layout()
+plt.show()
+
+
+
+
